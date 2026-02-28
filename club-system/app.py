@@ -722,6 +722,70 @@ def admin_results():
         show_results=get_setting("show_results") == "1",
     )
 
+@app.route("/admin/results/print")
+@admin_required
+def admin_results_print():
+    """인쇄용 배정 결과"""
+    db = get_db()
+    view_type = request.args.get("view", "club")  # club 또는 class
+    
+    # 전체 배정 결과
+    results = db.execute("""
+        SELECT s.grade, s.class_num, s.number, s.name as student_name,
+            c.id as club_id, c.name as club_name, c.category, c.teacher,
+            a.preference_rank
+        FROM assignments a
+        JOIN students s ON a.student_id = s.id
+        JOIN clubs c ON a.club_id = c.id
+        ORDER BY s.grade, s.class_num, s.number
+    """).fetchall()
+    
+    if not results:
+        flash("배정 결과가 없습니다.", "error")
+        return redirect(url_for("admin_results"))
+    
+    # 통계
+    total = len(results)
+    rank_counts = {0: 0, 1: 0, 2: 0, 3: 0}
+    for r in results:
+        rank_counts[r["preference_rank"]] = rank_counts.get(r["preference_rank"], 0) + 1
+    
+    # 동아리별 그룹핑
+    clubs_grouped = {}
+    for r in results:
+        cid = r["club_id"]
+        if cid not in clubs_grouped:
+            clubs_grouped[cid] = {
+                "name": r["club_name"],
+                "category": r["category"],
+                "teacher": r["teacher"],
+                "students": []
+            }
+        clubs_grouped[cid]["students"].append(r)
+    
+    # 학급별 그룹핑
+    class_grouped = {}
+    for r in results:
+        key = f"{r['grade']}-{r['class_num']}"
+        if key not in class_grouped:
+            class_grouped[key] = {
+                "grade": r["grade"],
+                "class_num": r["class_num"],
+                "students": []
+            }
+        class_grouped[key]["students"].append(r)
+    # 학급 순서 정렬
+    class_grouped = dict(sorted(class_grouped.items()))
+    
+    return render_template("admin/results_print.html",
+        results=results,
+        clubs_grouped=clubs_grouped,
+        class_grouped=class_grouped,
+        view_type=view_type,
+        total=total,
+        rank_counts=rank_counts,
+    )
+
 @app.route("/admin/results/csv")
 @admin_required
 def admin_results_csv():

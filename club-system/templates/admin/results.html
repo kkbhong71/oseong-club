@@ -22,6 +22,8 @@
     </form>
     <div style="flex:1;"></div>
     <a href="{{ url_for('admin_results_csv') }}" class="btn btn-outline">📥 CSV 다운로드</a>
+    <a href="{{ url_for('admin_results_print', view='club') }}" class="btn btn-outline" target="_blank">🖨️ 인쇄 (동아리별)</a>
+    <a href="{{ url_for('admin_results_print', view='class') }}" class="btn btn-outline" target="_blank">🖨️ 인쇄 (학급별)</a>
     <form method="POST" action="{{ url_for('admin_settings_toggle') }}" style="display:inline;">
         <input type="hidden" name="key" value="show_results">
         <button type="submit" class="btn {{ 'btn-green' if show_results else 'btn-outline' }}">

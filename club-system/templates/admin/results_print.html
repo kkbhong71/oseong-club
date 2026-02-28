@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오성중학교 동아리 배정 결과 (인쇄용)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+            color: #1a202c;
+            background: #fff;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 화면용 상단 컨트롤바 */
+        .control-bar {
+            position: sticky; top: 0; z-index: 100;
+            background: #2c5282; color: #fff;
+            padding: 12px 24px;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .control-bar a, .control-bar button {
+            font-family: inherit; font-size: 13px; font-weight: 600;
+            padding: 8px 18px; border-radius: 8px; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+            border: none; transition: all 0.2s;
+        }
+        .btn-back { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-back:hover { background: rgba(255,255,255,0.25); }
+        .btn-print { background: #fff; color: #2c5282; }
+        .btn-print:hover { background: #ebf8ff; }
+        .btn-view { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+        .btn-view:hover, .btn-view.active { background: rgba(255,255,255,0.2); color: #fff; }
+        .control-spacer { flex: 1; }
+        .control-label { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+        /* 인쇄 콘텐츠 영역 */
+        .print-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        /* 헤더 */
+        .print-header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #1a202c;
+        }
+        .print-header h1 {
+            font-size: 24px; font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .print-header h2 {
+            font-size: 18px; font-weight: 600;
+            color: #4a5568;
+        }
+        .print-header .print-date {
+            font-size: 12px; color: #718096;
+            margin-top: 8px;
+        }
+
+        /* 통계 요약 */
+        .print-stats {
+            display: flex; justify-content: center; gap: 24px;
+            margin-bottom: 28px; padding: 16px;
+            background: #f7fafc; border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .print-stat-item { text-align: center; }
+        .print-stat-label { font-size: 11px; color: #718096; }
+        .print-stat-value { font-size: 20px; font-weight: 800; }
+
+        /* 섹션 */
+        .print-section {
+            margin-bottom: 28px;
+            page-break-inside: avoid;
+        }
+        .print-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px;
+            background: #2c5282; color: #fff;
+            border-radius: 6px 6px 0 0;
+            font-size: 14px; font-weight: 700;
+        }
+        .print-section-sub {
+            font-size: 11px; font-weight: 400;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* 테이블 */
+        table {
+            width: 100%; border-collapse: collapse;
+            font-size: 12px;
+            border: 1px solid #cbd5e0;
+        }
+        th {
+            font-size: 11px; font-weight: 600;
+            padding: 8px 10px; text-align: center;
+            background: #edf2f7; color: #4a5568;
+            border: 1px solid #cbd5e0;
+        }
+        td {
+            padding: 6px 10px; text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        tr:nth-child(even) { background: #f9fafb; }
+        td.name-cell { text-align: left; font-weight: 600; }
+
+        /* 지망 표시 */
+        .rank-1 { color: #38a169; font-weight: 700; }
+        .rank-2 { color: #dd6b20; font-weight: 600; }
+        .rank-3 { color: #2c5282; font-weight: 600; }
+        .rank-0 { color: #a0aec0; font-size: 11px; }
+
+        /* 푸터 */
+        .print-footer {
+            text-align: center;
+            margin-top: 40px; padding-top: 16px;
+            border-top: 2px solid #1a202c;
+            font-size: 11px; color: #718096;
+        }
+        .signature-area {
+            display: flex; justify-content: flex-end;
+            gap: 40px; margin-top: 40px;
+        }
+        .signature-box {
+            text-align: center; width: 120px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #1a202c;
+            height: 40px; margin-bottom: 4px;
+        }
+        .signature-label { font-size: 11px; color: #4a5568; }
+
+        /* ============================================ */
+        /* 인쇄 전용 스타일 */
+        /* ============================================ */
+        @media print {
+            .control-bar { display: none !important; }
+
+            body { background: #fff; }
+            .print-content { padding: 0; max-width: 100%; }
+
+            .print-header { border-bottom: 3px solid #000; }
+            .print-stats { border: 1px solid #999; background: #f5f5f5; }
+
+            .print-section { page-break-inside: avoid; }
+            .print-section-header {
+                background: #333 !important; color: #fff !important;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+
+            table { font-size: 11px; }
+            th {
+                background: #e5e5e5 !important;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+            tr:nth-child(even) {
+                background: #f5f5f5 !important;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+
+            .rank-1 { color: #000; font-weight: 700; }
+            .rank-2 { color: #333; }
+            .rank-3 { color: #555; }
+            .rank-0 { color: #999; }
+
+            @page {
+                size: A4;
+                margin: 15mm 12mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 화면용 상단 컨트롤바 (인쇄 시 숨김) -->
+<div class="control-bar">
+    <a href="{{ url_for('admin_results') }}" class="btn-back">← 결과 페이지로</a>
+    <div class="control-spacer"></div>
+    <span class="control-label">보기 방식:</span>
+    <a href="{{ url_for('admin_results_print', view='club') }}"
+       class="btn-view {{ 'active' if view_type == 'club' }}">📋 동아리별</a>
+    <a href="{{ url_for('admin_results_print', view='class') }}"
+       class="btn-view {{ 'active' if view_type == 'class' }}">🏫 학급별</a>
+    <div class="control-spacer"></div>
+    <button class="btn-print" onclick="window.print()">🖨️ 인쇄하기</button>
+</div>
+
+<!-- 인쇄 콘텐츠 -->
+<div class="print-content">
+
+    <!-- 헤더 -->
+    <div class="print-header">
+        <h1>오성중학교</h1>
+        <h2>동아리 배정 결과 {{ "(동아리별)" if view_type == "club" else "(학급별)" }}</h2>
+        <div class="print-date">출력일: <script>document.write(new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'}))</script></div>
+    </div>
+
+    <!-- 통계 요약 -->
+    <div class="print-stats">
+        <div class="print-stat-item">
+            <div class="print-stat-label">총 배정</div>
+            <div class="print-stat-value">{{ total }}명</div>
+        </div>
+        <div class="print-stat-item">
+            <div class="print-stat-label">1지망 배정</div>
+            <div class="print-stat-value rank-1">{{ rank_counts[1] }}명</div>
+        </div>
+        <div class="print-stat-item">
+            <div class="print-stat-label">2지망 배정</div>
+            <div class="print-stat-value rank-2">{{ rank_counts[2] }}명</div>
+        </div>
+        <div class="print-stat-item">
+            <div class="print-stat-label">3지망 배정</div>
+            <div class="print-stat-value rank-3">{{ rank_counts[3] }}명</div>
+        </div>
+        {% if rank_counts[0] > 0 %}
+        <div class="print-stat-item">
+            <div class="print-stat-label">잔여 배정</div>
+            <div class="print-stat-value rank-0">{{ rank_counts[0] }}명</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 동아리별 보기 -->
+    <!-- ============================================ -->
+    {% if view_type == "club" %}
+        {% for club_id, club in clubs_grouped.items() %}
+        <div class="print-section">
+            <div class="print-section-header">
+                <span>{{ club.name }} ({{ club.category }})</span>
+                <span class="print-section-sub">담당: {{ club.teacher }} 선생님 · {{ club.students|length }}명</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:8%;">순번</th>
+                        <th style="width:12%;">학년</th>
+                        <th style="width:12%;">반</th>
+                        <th style="width:12%;">번호</th>
+                        <th style="width:20%;">이름</th>
+                        <th style="width:15%;">지망</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in club.students|sort(attribute='grade,class_num,number') %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ s.grade }}학년</td>
+                        <td>{{ s.class_num }}반</td>
+                        <td>{{ s.number }}번</td>
+                        <td class="name-cell">{{ s.student_name }}</td>
+                        <td>
+                            {% if s.preference_rank == 1 %}<span class="rank-1">★ 1지망</span>
+                            {% elif s.preference_rank == 2 %}<span class="rank-2">2지망</span>
+                            {% elif s.preference_rank == 3 %}<span class="rank-3">3지망</span>
+                            {% else %}<span class="rank-0">잔여배정</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+
+    <!-- ============================================ -->
+    <!-- 학급별 보기 -->
+    <!-- ============================================ -->
+    {% else %}
+        {% for key, cls in class_grouped.items() %}
+        <div class="print-section">
+            <div class="print-section-header">
+                <span>{{ cls.grade }}학년 {{ cls.class_num }}반</span>
+                <span class="print-section-sub">{{ cls.students|length }}명</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:8%;">순번</th>
+                        <th style="width:10%;">번호</th>
+                        <th style="width:18%;">이름</th>
+                        <th style="width:25%;">배정 동아리</th>
+                        <th style="width:15%;">카테고리</th>
+                        <th style="width:12%;">지망</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in cls.students|sort(attribute='number') %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ s.number }}번</td>
+                        <td class="name-cell">{{ s.student_name }}</td>
+                        <td style="font-weight:600;">{{ s.club_name }}</td>
+                        <td>{{ s.category }}</td>
+                        <td>
+                            {% if s.preference_rank == 1 %}<span class="rank-1">★ 1지망</span>
+                            {% elif s.preference_rank == 2 %}<span class="rank-2">2지망</span>
+                            {% elif s.preference_rank == 3 %}<span class="rank-3">3지망</span>
+                            {% else %}<span class="rank-0">잔여배정</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- 결재란 -->
+    <div class="signature-area">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">담당</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">교감</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">교장</div>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="print-footer">
+        오성중학교 동아리 편성 시스템
+    </div>
+
+</div>
+
+</body>
+</html>
