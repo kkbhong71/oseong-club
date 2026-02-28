@@ -1,0 +1,102 @@
+{% extends "admin/base_admin.html" %}
+{% set active = "dashboard" %}
+{% block page_title %}대시보드{% endblock %}
+
+{% block admin_content %}
+<!-- 상태 카드 -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;" class="mb-6">
+    <div class="stat-card">
+        <div class="stat-label">전체 학생</div>
+        <div class="stat-value" style="color:var(--primary);">{{ total_students }}명</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">등록 동아리</div>
+        <div class="stat-value" style="color:var(--purple);">{{ total_clubs }}개</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">희망조사 제출</div>
+        <div class="stat-value" style="color:var(--green);">{{ total_prefs }}명</div>
+        {% if total_students > 0 %}
+        <div class="progress-bar mt-4" style="margin-top:8px;">
+            <div class="progress-fill" style="width:{{ (total_prefs / total_students * 100)|int }}%"></div>
+        </div>
+        <div class="text-xs text-gray" style="margin-top:4px;">{{ (total_prefs / total_students * 100)|int }}% 완료</div>
+        {% endif %}
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">배정 완료</div>
+        <div class="stat-value" style="color:{{ 'var(--green)' if total_assigned > 0 else 'var(--gray-300)' }};">{{ total_assigned }}명</div>
+    </div>
+</div>
+
+<!-- 현재 상태 -->
+<div class="card mb-5">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">📋 현재 시스템 상태</h3>
+    <div class="flex gap-4 flex-wrap">
+        <div class="flex items-center gap-2">
+            <span style="width:10px; height:10px; border-radius:50%; background:{{ 'var(--green)' if survey_open else 'var(--red)' }}; display:inline-block;"></span>
+            <span class="text-sm">희망조사: <strong>{{ "접수 중" if survey_open else "마감" }}</strong></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span style="width:10px; height:10px; border-radius:50%; background:{{ 'var(--green)' if show_results else 'var(--gray-300)' }}; display:inline-block;"></span>
+            <span class="text-sm">결과 공개: <strong>{{ "공개" if show_results else "비공개" }}</strong></span>
+        </div>
+    </div>
+</div>
+
+<!-- 학년별 제출 현황 -->
+<div class="card">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">📊 학년별 제출 현황</h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>학년</th>
+                    <th>전체</th>
+                    <th>제출</th>
+                    <th>미제출</th>
+                    <th>제출률</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gs in grade_stats %}
+                <tr>
+                    <td><strong>{{ gs.grade }}학년</strong></td>
+                    <td>{{ gs.total }}명</td>
+                    <td style="color:var(--green); font-weight:600;">{{ gs.submitted }}명</td>
+                    <td style="color:{{ 'var(--red)' if gs.total - gs.submitted > 0 else 'var(--gray-300)' }};">{{ gs.total - gs.submitted }}명</td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <div class="progress-bar" style="flex:1; max-width:120px;">
+                                <div class="progress-fill" style="width:{{ (gs.submitted / gs.total * 100)|int if gs.total > 0 else 0 }}%"></div>
+                            </div>
+                            <span class="text-sm text-bold">{{ (gs.submitted / gs.total * 100)|int if gs.total > 0 else 0 }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 빠른 이동 -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-top:24px;">
+    <a href="{{ url_for('admin_clubs') }}" class="card text-center" style="text-decoration:none; color:inherit;">
+        <div style="font-size:28px; margin-bottom:8px;">📋</div>
+        <div class="text-sm text-bold">동아리 관리</div>
+    </a>
+    <a href="{{ url_for('admin_preferences') }}" class="card text-center" style="text-decoration:none; color:inherit;">
+        <div style="font-size:28px; margin-bottom:8px;">📈</div>
+        <div class="text-sm text-bold">지원 현황</div>
+    </a>
+    <a href="{{ url_for('admin_assign') }}" class="card text-center" style="text-decoration:none; color:inherit;">
+        <div style="font-size:28px; margin-bottom:8px;">🎲</div>
+        <div class="text-sm text-bold">배정 실행</div>
+    </a>
+    <a href="{{ url_for('admin_results') }}" class="card text-center" style="text-decoration:none; color:inherit;">
+        <div style="font-size:28px; margin-bottom:8px;">✅</div>
+        <div class="text-sm text-bold">배정 결과</div>
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "admin/base_admin.html" %}
+{% set active = "students" %}
+{% block page_title %}학생 관리{% endblock %}
+
+{% block admin_content %}
+<!-- 필터 -->
+<div class="flex gap-3 flex-wrap items-center mb-5">
+    <form method="GET" class="flex gap-2 flex-wrap items-center">
+        <select name="grade" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">전체 학년</option>
+            <option value="1" {{ 'selected' if grade_filter == '1' }}>1학년</option>
+            <option value="2" {{ 'selected' if grade_filter == '2' }}>2학년</option>
+            <option value="3" {{ 'selected' if grade_filter == '3' }}>3학년</option>
+        </select>
+        <select name="class_num" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">전체 반</option>
+            <option value="1" {{ 'selected' if class_filter == '1' }}>1반</option>
+            <option value="2" {{ 'selected' if class_filter == '2' }}>2반</option>
+        </select>
+    </form>
+    <span class="text-sm text-gray">검색 결과: {{ students|length }}명</span>
+</div>
+
+<!-- 학생 추가 -->
+<div class="card mb-5">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:12px;">➕ 학생 추가</h3>
+    <form method="POST" action="{{ url_for('admin_student_add') }}" class="flex gap-3 flex-wrap items-end">
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">학년</label>
+            <select name="grade" class="form-select" style="width:100px;" required>
+                <option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">반</label>
+            <select name="class_num" class="form-select" style="width:90px;" required>
+                <option value="1">1반</option><option value="2">2반</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">번호</label>
+            <input type="number" name="number" class="form-input" style="width:90px;" min="1" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">이름</label>
+            <input name="name" class="form-input" style="width:120px;" placeholder="이름" required>
+        </div>
+        <button type="submit" class="btn btn-primary">추가</button>
+    </form>
+</div>
+
+<!-- 학생 목록 -->
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>학년</th>
+                <th>반</th>
+                <th>번호</th>
+                <th>이름</th>
+                <th>희망제출</th>
+                <th style="width:80px;">관리</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr>
+                <td>{{ s.grade }}학년</td>
+                <td>{{ s.class_num }}반</td>
+                <td>{{ s.number }}번</td>
+                <td><strong>{{ s.name }}</strong></td>
+                <td>
+                    {% if s.has_pref %}
+                    <span style="color:var(--green); font-weight:600;">✅ 제출</span>
+                    {% else %}
+                    <span class="text-gray">미제출</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_student_delete', student_id=s.id) }}" onsubmit="return confirm('정말 삭제하시겠습니까?');" style="display:inline;">
+                        <button type="submit" class="btn btn-sm" style="background:none; color:var(--red); padding:4px 8px; font-size:12px;">삭제</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

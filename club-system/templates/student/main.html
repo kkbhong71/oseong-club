@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}동아리 선택 - 오성중학교{% endblock %}
+
+{% block content %}
+<div style="min-height:100vh; background:var(--gray-50);">
+    <div class="student-container">
+        <!-- 헤더 -->
+        <div class="student-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p style="font-size:12px; color:rgba(255,255,255,0.8); margin-bottom:2px;">오성중학교 동아리 편성</p>
+                    <h2 style="font-size:20px; font-weight:700;">
+                        {{ session.student_grade }}-{{ session.student_class }} {{ session.student_name }}
+                    </h2>
+                </div>
+                <a href="{{ url_for('student_logout') }}" style="font-size:12px; color:rgba(255,255,255,0.8); background:rgba(255,255,255,0.15); padding:6px 14px; border-radius:8px; text-decoration:none;">로그아웃</a>
+            </div>
+        </div>
+
+        <!-- ===== 배정 결과 표시 ===== -->
+        {% if show_results and assignment %}
+        <div class="result-banner">
+            <div style="font-size:36px; margin-bottom:8px;">🎉</div>
+            <h3 style="font-size:18px; margin-bottom:4px;">배정 결과</h3>
+            <div style="font-size:26px; font-weight:800; color:var(--purple);">
+                {{ assignment.club_name }}
+            </div>
+            <div style="margin-top:10px;">
+                {% if assignment.preference_rank == 1 %}
+                <span class="badge badge-rank1" style="font-size:14px; padding:6px 20px;">1지망 배정 🎉</span>
+                {% elif assignment.preference_rank == 2 %}
+                <span class="badge badge-rank2" style="font-size:14px; padding:6px 20px;">2지망 배정</span>
+                {% elif assignment.preference_rank == 3 %}
+                <span class="badge badge-rank3" style="font-size:14px; padding:6px 20px;">3지망 배정</span>
+                {% else %}
+                <span class="badge badge-rank0" style="font-size:14px; padding:6px 20px;">잔여석 배정</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== 희망조사 마감 안내 ===== -->
+        {% if not survey_open and not preference %}
+        <div class="card student-card" style="background:#fff5f5; border-color:#feb2b2;">
+            <p class="text-sm text-center" style="color:var(--red);">
+                ⚠️ 현재 희망조사 기간이 아닙니다.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- ===== 이미 제출한 경우 ===== -->
+        {% if preference and survey_open %}
+        <div class="card student-card">
+            <div class="text-center" style="padding:12px 0;">
+                <div style="font-size:36px; margin-bottom:8px;">✅</div>
+                <h3 style="font-size:16px; margin-bottom:16px;">희망조사 제출 완료!</h3>
+                
+                {% for rank, choice_id in [('1지망', preference.first_choice), ('2지망', preference.second_choice), ('3지망', preference.third_choice)] %}
+                <div class="pref-row">
+                    <span style="font-size:12px; font-weight:700; color:var(--purple); background:#e9d8fd; padding:3px 12px; border-radius:10px; flex-shrink:0;">{{ rank }}</span>
+                    <span style="font-weight:600;">
+                        {% for c in clubs %}
+                            {% if c.id == choice_id %}{{ c.name }}{% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+                {% endfor %}
+
+                <a href="{{ url_for('student_page') }}?modify=1" class="btn btn-outline mt-4" style="display:inline-flex;">수정하기</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== 희망 선택 폼 ===== -->
+        {% if survey_open and (not preference or request.args.get('modify')) %}
+        <div class="card student-card">
+            <h3 style="font-size:16px; font-weight:700; margin-bottom:4px;">희망 동아리 선택</h3>
+            <p class="text-xs text-gray mb-4">1, 2, 3지망을 각각 다른 동아리로 선택해주세요.</p>
+
+            <form method="POST" action="{{ url_for('student_submit') }}" id="prefForm">
+                {% for key, label, color in [('first_choice', '1지망', 'var(--red)'), ('second_choice', '2지망', 'var(--orange)'), ('third_choice', '3지망', 'var(--primary)')] %}
+                <div class="form-group">
+                    <label class="form-label" style="color:{{ color }}; font-size:13px;">⭐ {{ label }} 선택</label>
+                    <select name="{{ key }}" class="form-select choice-select" required>
+                        <option value="">동아리를 선택하세요</option>
+                        {% for c in clubs %}
+                        <option value="{{ c.id }}" 
+                            {% if preference and preference[key] == c.id %}selected{% endif %}
+                            data-name="{{ c.name }}"
+                            data-category="{{ c.category }}"
+                            data-max="{{ c.max_capacity }}"
+                            data-first="{{ club_first_counts.get(c.id, 0) }}">
+                            {{ c.name }} ({{ c.category }}) - 정원 {{ c.max_capacity }}명
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endfor %}
+
+                <button type="submit" id="submitBtn" class="btn btn-green btn-block btn-lg mt-4">제출하기</button>
+            </form>
+        </div>
+
+        <!-- 동아리 안내 -->
+        <h3 style="font-size:16px; font-weight:700; margin:20px 16px 12px;">📋 동아리 안내</h3>
+        
+        {% set categories = ['스포츠', '예술', '학술', '봉사', '기타'] %}
+        {% for cat in categories %}
+            {% set cat_clubs = clubs|selectattr('category', 'equalto', cat)|list %}
+            {% if cat_clubs %}
+            <div style="margin-bottom:16px;">
+                <div style="padding:0 16px; margin-bottom:8px;">
+                    {% set cat_class = {'스포츠':'sport','예술':'art','학술':'academic','봉사':'volunteer'}.get(cat,'etc') %}
+                    <span class="badge badge-{{ cat_class }}">{{ cat }}</span>
+                </div>
+                {% for c in cat_clubs %}
+                <div class="club-info-card">
+                    <div class="flex justify-between" style="align-items:flex-start;">
+                        <div>
+                            <h4 style="font-size:15px; font-weight:700; margin-bottom:2px;">{{ c.name }}</h4>
+                            <p class="text-xs text-gray" style="margin-bottom:2px;">{{ c.description }}</p>
+                            <p class="text-xs" style="color:var(--gray-300);">담당: {{ c.teacher }} 선생님</p>
+                        </div>
+                        <div style="text-align:right; flex-shrink:0; margin-left:12px;">
+                            <div class="text-xs text-gray">정원 {{ c.max_capacity }}명</div>
+                            <div class="text-xs text-bold" style="color:{{ 'var(--red)' if club_first_counts.get(c.id, 0) >= c.max_capacity else 'var(--green)' }};">
+                                1지망 {{ club_first_counts.get(c.id, 0) }}명
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endfor %}
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+// 중복 선택 방지
+document.querySelectorAll('.choice-select').forEach(select => {
+    select.addEventListener('change', () => {
+        const selects = document.querySelectorAll('.choice-select');
+        const selected = Array.from(selects).map(s => s.value).filter(v => v);
+        
+        selects.forEach(s => {
+            Array.from(s.options).forEach(opt => {
+                if (opt.value && opt.value !== s.value) {
+                    opt.disabled = selected.includes(opt.value);
+                    if (opt.disabled && !opt.textContent.includes('(이미 선택)')) {
+                        opt.textContent = opt.textContent + ' (이미 선택)';
+                    } else if (!opt.disabled) {
+                        opt.textContent = opt.textContent.replace(' (이미 선택)', '');
+                    }
+                }
+            });
+        });
+    });
+});
+
+// 제출 전 유효성 검사
+document.getElementById('prefForm')?.addEventListener('submit', function(e) {
+    const selects = document.querySelectorAll('.choice-select');
+    const values = Array.from(selects).map(s => s.value);
+    
+    if (values.some(v => !v)) {
+        e.preventDefault();
+        alert('1, 2, 3지망을 모두 선택해주세요.');
+        return;
+    }
+    
+    if (new Set(values).size < 3) {
+        e.preventDefault();
+        alert('같은 동아리를 중복 선택할 수 없습니다.');
+        return;
+    }
+    
+    if (!confirm('선택한 내용으로 제출하시겠습니까?')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

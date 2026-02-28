@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}학생 로그인 - 오성중학교{% endblock %}
+
+{% block content %}
+<div style="min-height:100vh; background:linear-gradient(150deg,#1a365d,#2c5282,#3182ce); display:flex; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#fff; border-radius:24px; padding:32px 28px; max-width:380px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+        <a href="{{ url_for('landing') }}" style="font-size:13px; color:#4299e1; display:flex; align-items:center; gap:4px; margin-bottom:20px;">← 돌아가기</a>
+        
+        <div class="text-center mb-5">
+            <div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg,#38a169,#48bb78); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:28px;">📱</div>
+            <h2 style="font-size:22px; font-weight:700;">학생 로그인</h2>
+            <p class="text-sm text-gray" style="margin-top:6px;">본인의 정보를 입력하세요</p>
+        </div>
+
+        <form method="POST">
+            <div class="grid-2 mb-3">
+                <div class="form-group">
+                    <label class="form-label">학년</label>
+                    <select name="grade" class="form-select" required>
+                        <option value="">선택</option>
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">반</label>
+                    <select name="class_num" class="form-select" required>
+                        <option value="">선택</option>
+                        <option value="1">1반</option>
+                        <option value="2">2반</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">번호</label>
+                <input type="number" name="number" class="form-input" placeholder="번호 입력" min="1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">이름</label>
+                <input type="text" name="name" class="form-input" placeholder="이름 입력" required>
+            </div>
+            <button type="submit" class="btn btn-green btn-block btn-lg" style="margin-top:8px;">로그인</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

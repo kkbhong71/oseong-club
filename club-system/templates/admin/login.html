@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="min-height:100vh; background:linear-gradient(150deg,#1a365d,#2c5282,#3182ce); display:flex; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#fff; border-radius:24px; padding:36px 32px; max-width:380px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+        <a href="{{ url_for('landing') }}" style="font-size:13px; color:#4299e1; display:flex; align-items:center; gap:4px; margin-bottom:24px;">← 돌아가기</a>
+        <div class="text-center mb-6">
+            <div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg,#2c5282,#2b6cb0); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:28px;">🔒</div>
+            <h2 style="font-size:22px; font-weight:700;">관리자 로그인</h2>
+            <p class="text-sm text-gray" style="margin-top:6px;">관리자 비밀번호를 입력하세요</p>
+        </div>
+        <form method="POST">
+            <div class="form-group">
+                <input type="password" name="password" class="form-input" placeholder="비밀번호 입력" required autofocus>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">로그인</button>
+        </form>
+        <p class="text-xs text-gray text-center mt-4">기본 비밀번호: oseong2026</p>
+    </div>
+</div>
+{% endblock %}

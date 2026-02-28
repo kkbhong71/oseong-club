@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-layout">
+    <!-- 사이드바 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-header-icon">🏫</span>
+            <div>
+                <div class="sidebar-title">오성중학교</div>
+                <div class="sidebar-subtitle">동아리 편성 관리</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if active == 'dashboard' %}active{% endif %}">📊 대시보드</a>
+            <a href="{{ url_for('admin_clubs') }}" class="sidebar-link {% if active == 'clubs' %}active{% endif %}">📋 동아리 관리</a>
+            <a href="{{ url_for('admin_students') }}" class="sidebar-link {% if active == 'students' %}active{% endif %}">👤 학생 관리</a>
+            <a href="{{ url_for('admin_preferences') }}" class="sidebar-link {% if active == 'preferences' %}active{% endif %}">📈 희망조사 현황</a>
+            <a href="{{ url_for('admin_assign') }}" class="sidebar-link {% if active == 'assign' %}active{% endif %}">🎲 배정 실행</a>
+            <a href="{{ url_for('admin_results') }}" class="sidebar-link {% if active == 'results' %}active{% endif %}">✅ 배정 결과</a>
+            <a href="{{ url_for('admin_settings') }}" class="sidebar-link {% if active == 'settings' %}active{% endif %}">⚙️ 설정</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('admin_logout') }}" class="sidebar-link" style="padding:8px 0;">🚪 로그아웃</a>
+        </div>
+    </div>
+
+    <!-- 메인 -->
+    <div class="admin-main">
+        <div class="admin-topbar">
+            <h1>{% block page_title %}{% endblock %}</h1>
+            <div class="flex gap-2 flex-wrap">
+                {% block topbar_extra %}{% endblock %}
+            </div>
+        </div>
+        <div class="admin-content">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

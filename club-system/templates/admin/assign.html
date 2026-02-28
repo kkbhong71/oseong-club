@@ -1,0 +1,96 @@
+{% extends "admin/base_admin.html" %}
+{% set active = "assign" %}
+{% block page_title %}배정 실행{% endblock %}
+
+{% block admin_content %}
+<!-- 배정 실행 카드 -->
+<div class="card mb-5" style="background:linear-gradient(135deg, #ebf8ff, #e9d8fd); border:2px solid #b794f4;">
+    <h3 style="font-size:18px; font-weight:700; color:#553c9a; margin-bottom:8px;">🎲 자동 배정 실행</h3>
+    <p class="text-sm" style="color:#6b46c1; margin-bottom:16px; line-height:1.7;">
+        제출된 희망조사를 바탕으로 1지망 → 2지망 → 3지망 순서로 배정합니다.<br>
+        정원 초과 시 <strong>랜덤 추첨</strong>이 진행됩니다.
+    </p>
+    <div class="flex gap-3 flex-wrap items-center">
+        {% if total_prefs > 0 %}
+        <form method="POST" action="{{ url_for('admin_assign_run') }}" onsubmit="return confirm('배정을 실행하시겠습니까? 기존 배정 결과는 초기화됩니다.');">
+            <button type="submit" class="btn btn-purple btn-lg">🎲 배정 실행</button>
+        </form>
+        {% if total_assigned > 0 %}
+        <form method="POST" action="{{ url_for('admin_assign_reset') }}" onsubmit="return confirm('배정 결과를 초기화하시겠습니까?');">
+            <button type="submit" class="btn btn-outline">🔄 배정 초기화</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <button class="btn btn-lg" disabled style="background:var(--gray-300); color:#fff;">제출된 희망조사가 없습니다</button>
+        {% endif %}
+        <span class="text-sm text-gray">제출 {{ total_prefs }}명</span>
+    </div>
+</div>
+
+<!-- 배정 결과 통계 -->
+{% if assign_stats %}
+<h3 style="font-size:16px; font-weight:700; margin-bottom:12px;">📊 배정 결과 통계</h3>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;" class="mb-5">
+    <div class="stat-card" style="border-left:4px solid var(--green);">
+        <div class="stat-label">총 배정</div>
+        <div style="font-size:24px; font-weight:800;">{{ assign_stats.total }}명</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--red);">
+        <div class="stat-label">1지망 배정</div>
+        <div style="font-size:24px; font-weight:800; color:var(--red);">{{ assign_stats.first }}명</div>
+        <div class="text-xs text-gray">{{ (assign_stats.first / assign_stats.total * 100)|int if assign_stats.total > 0 else 0 }}%</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--orange);">
+        <div class="stat-label">2지망 배정</div>
+        <div style="font-size:24px; font-weight:800; color:var(--orange);">{{ assign_stats.second }}명</div>
+        <div class="text-xs text-gray">{{ (assign_stats.second / assign_stats.total * 100)|int if assign_stats.total > 0 else 0 }}%</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--primary);">
+        <div class="stat-label">3지망 배정</div>
+        <div style="font-size:24px; font-weight:800; color:var(--primary);">{{ assign_stats.third }}명</div>
+    </div>
+    {% if assign_stats.none > 0 %}
+    <div class="stat-card" style="border-left:4px solid var(--gray-300);">
+        <div class="stat-label">잔여석 배정</div>
+        <div style="font-size:24px; font-weight:800; color:var(--gray-500);">{{ assign_stats.none }}명</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 동아리별 배정 현황 -->
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>동아리</th>
+                <th>정원</th>
+                <th>배정인원</th>
+                <th>1지망</th>
+                <th>2지망</th>
+                <th>3지망</th>
+                <th>잔여배정</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in assign_stats.clubs %}
+            <tr>
+                <td><strong>{{ c.name }}</strong></td>
+                <td>{{ c.max_capacity }}명</td>
+                <td style="font-weight:700;">{{ c.assigned_count }}명</td>
+                <td>{{ c.r1 }}</td>
+                <td>{{ c.r2 }}</td>
+                <td>{{ c.r3 }}</td>
+                <td>{{ c.r0 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center" style="padding:40px;">
+    <div style="font-size:48px; margin-bottom:12px;">📋</div>
+    <p class="text-gray">배정을 실행하면 결과가 여기에 표시됩니다.</p>
+</div>
+{% endif %}
+{% endblock %}

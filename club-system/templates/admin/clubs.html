@@ -1,0 +1,142 @@
+{% extends "admin/base_admin.html" %}
+{% set active = "clubs" %}
+{% block page_title %}동아리 관리{% endblock %}
+{% block topbar_extra %}
+<span class="text-sm text-gray">총 {{ clubs|length }}개 동아리</span>
+{% endblock %}
+
+{% block admin_content %}
+<!-- 동아리 추가 폼 -->
+<div class="card mb-5">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">➕ 동아리 추가</h3>
+    <form method="POST" action="{{ url_for('admin_club_add') }}">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+            <div class="form-group">
+                <label class="form-label">동아리명 *</label>
+                <input name="name" class="form-input" placeholder="동아리 이름" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">카테고리</label>
+                <select name="category" class="form-select">
+                    <option>스포츠</option><option>예술</option><option>학술</option><option>봉사</option><option>기타</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">최대 정원</label>
+                <input type="number" name="max_capacity" class="form-input" value="{{ default_max }}" min="1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">최소 인원</label>
+                <input type="number" name="min_capacity" class="form-input" value="{{ default_min }}" min="1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">담당교사 *</label>
+                <input name="teacher" class="form-input" placeholder="교사명" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">설명</label>
+                <input name="description" class="form-input" placeholder="동아리 설명">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">동아리 추가</button>
+    </form>
+</div>
+
+<!-- 동아리 목록 -->
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>동아리명</th>
+                <th>카테고리</th>
+                <th>담당교사</th>
+                <th>정원</th>
+                <th>설명</th>
+                <th style="width:140px;">관리</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for club in clubs %}
+            <tr id="row-{{ club.id }}">
+                <td><strong>{{ club.name }}</strong></td>
+                <td>
+                    {% set cat_class = {'스포츠':'sport','예술':'art','학술':'academic','봉사':'volunteer'}.get(club.category,'etc') %}
+                    <span class="badge badge-{{ cat_class }}">{{ club.category }}</span>
+                </td>
+                <td>{{ club.teacher }}</td>
+                <td>{{ club.min_capacity }}~{{ club.max_capacity }}명</td>
+                <td class="text-sm text-gray">{{ club.description }}</td>
+                <td>
+                    <div class="flex gap-2">
+                        <button class="btn btn-outline btn-sm" onclick="editClub({{ club.id }}, '{{ club.name }}', '{{ club.category }}', {{ club.max_capacity }}, {{ club.min_capacity }}, '{{ club.teacher }}', '{{ club.description }}')">수정</button>
+                        <form method="POST" action="{{ url_for('admin_club_delete', club_id=club.id) }}" onsubmit="return confirm('정말 삭제하시겠습니까?');" style="display:inline;">
+                            <button type="submit" class="btn btn-sm" style="background:none; color:var(--red); padding:6px 10px;">삭제</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 수정 모달 -->
+<div id="editModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <h3 style="font-size:18px; font-weight:700; margin-bottom:16px;">동아리 수정</h3>
+        <form id="editForm" method="POST">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">동아리명</label>
+                    <input name="name" id="edit-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">카테고리</label>
+                    <select name="category" id="edit-category" class="form-select">
+                        <option>스포츠</option><option>예술</option><option>학술</option><option>봉사</option><option>기타</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">최대 정원</label>
+                    <input type="number" name="max_capacity" id="edit-max" class="form-input" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">최소 인원</label>
+                    <input type="number" name="min_capacity" id="edit-min" class="form-input" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">담당교사</label>
+                    <input name="teacher" id="edit-teacher" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">설명</label>
+                    <input name="description" id="edit-desc" class="form-input">
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">저장</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function editClub(id, name, category, max, min, teacher, desc) {
+    document.getElementById('editForm').action = '/admin/clubs/edit/' + id;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-category').value = category;
+    document.getElementById('edit-max').value = max;
+    document.getElementById('edit-min').value = min;
+    document.getElementById('edit-teacher').value = teacher;
+    document.getElementById('edit-desc').value = desc;
+    document.getElementById('editModal').style.display = 'flex';
+}
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+</script>
+{% endblock %}

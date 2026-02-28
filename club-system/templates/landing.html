@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}오성중학교 동아리 편성 시스템{% endblock %}
+
+{% block content %}
+<div style="min-height:100vh; background:linear-gradient(150deg,#1a365d 0%,#2c5282 40%,#2b6cb0 70%,#3182ce 100%); display:flex; align-items:center; justify-content:center; padding:20px;">
+    <div style="text-align:center; max-width:600px; width:100%;">
+        <div style="margin-bottom:40px;">
+            <div style="font-size:60px; margin-bottom:12px;">🏫</div>
+            <h1 style="font-size:36px; font-weight:800; color:#fff; letter-spacing:-1px;">오성중학교</h1>
+            <h2 style="font-size:20px; font-weight:400; color:rgba(255,255,255,0.85); margin-top:8px;">동아리 편성 시스템</h2>
+            <p style="font-size:14px; color:rgba(255,255,255,0.6); margin-top:12px; line-height:1.7;">
+                희망 동아리를 선택하고, 공정한 추첨을 통해 동아리에 배정됩니다.
+            </p>
+        </div>
+
+        <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+            <!-- 교사 카드 -->
+            <a href="{{ url_for('admin_login') }}" style="text-decoration:none;">
+                <div style="background:#fff; border-radius:20px; padding:36px 32px; width:220px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.08); transition:all 0.3s;"
+                    onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 40px rgba(0,0,0,0.15)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'">
+                    <div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg,#2c5282,#2b6cb0); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:28px;">
+                        🖥️
+                    </div>
+                    <h3 style="font-size:18px; font-weight:700; color:#1a202c; margin-bottom:4px;">교사 (관리자)</h3>
+                    <p style="font-size:13px; color:#718096;">동아리 관리, 학생 관리<br>배정 실행</p>
+                </div>
+            </a>
+
+            <!-- 학생 카드 -->
+            <a href="{{ url_for('student_login') }}" style="text-decoration:none;">
+                <div style="background:#fff; border-radius:20px; padding:36px 32px; width:220px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.08); transition:all 0.3s;"
+                    onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 40px rgba(0,0,0,0.15)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'">
+                    <div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg,#38a169,#48bb78); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:28px;">
+                        📱
+                    </div>
+                    <h3 style="font-size:18px; font-weight:700; color:#1a202c; margin-bottom:4px;">학생</h3>
+                    <p style="font-size:13px; color:#718096;">희망 동아리 선택<br>배정 결과 확인</p>
+                </div>
+            </a>
+        </div>
+
+        <p style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:48px;">
+            © 2026 오성중학교 동아리 편성 시스템
+        </p>
+    </div>
+</div>
+{% endblock %}

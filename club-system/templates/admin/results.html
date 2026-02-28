@@ -1,0 +1,84 @@
+{% extends "admin/base_admin.html" %}
+{% set active = "results" %}
+{% block page_title %}배정 결과{% endblock %}
+
+{% block admin_content %}
+{% if results %}
+<!-- 필터 & 액션 -->
+<div class="flex gap-3 flex-wrap items-center mb-5">
+    <form method="GET" class="flex gap-2 flex-wrap items-center">
+        <select name="club_id" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">전체 동아리</option>
+            {% for c in clubs %}
+            <option value="{{ c.id }}" {{ 'selected' if club_filter == c.id|string }}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="grade" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">전체 학년</option>
+            <option value="1" {{ 'selected' if grade_filter == '1' }}>1학년</option>
+            <option value="2" {{ 'selected' if grade_filter == '2' }}>2학년</option>
+            <option value="3" {{ 'selected' if grade_filter == '3' }}>3학년</option>
+        </select>
+    </form>
+    <div style="flex:1;"></div>
+    <a href="{{ url_for('admin_results_csv') }}" class="btn btn-outline">📥 CSV 다운로드</a>
+    <form method="POST" action="{{ url_for('admin_settings_toggle') }}" style="display:inline;">
+        <input type="hidden" name="key" value="show_results">
+        <button type="submit" class="btn {{ 'btn-green' if show_results else 'btn-outline' }}">
+            {{ "✅ 결과 공개 중" if show_results else "🔒 결과 비공개" }}
+        </button>
+    </form>
+</div>
+
+<p class="text-sm text-gray mb-3">검색 결과: {{ results|length }}명</p>
+
+<!-- 결과 테이블 -->
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>학년반</th>
+                <th>번호</th>
+                <th>이름</th>
+                <th>배정 동아리</th>
+                <th>카테고리</th>
+                <th>지망</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr>
+                <td>{{ r.grade }}-{{ r.class_num }}</td>
+                <td>{{ r.number }}</td>
+                <td><strong>{{ r.student_name }}</strong></td>
+                <td><strong>{{ r.club_name }}</strong></td>
+                <td>
+                    {% set cat_class = {'스포츠':'sport','예술':'art','학술':'academic','봉사':'volunteer'}.get(r.category,'etc') %}
+                    <span class="badge badge-{{ cat_class }}">{{ r.category }}</span>
+                </td>
+                <td>
+                    {% if r.preference_rank == 1 %}
+                    <span class="badge badge-rank1">1지망</span>
+                    {% elif r.preference_rank == 2 %}
+                    <span class="badge badge-rank2">2지망</span>
+                    {% elif r.preference_rank == 3 %}
+                    <span class="badge badge-rank3">3지망</span>
+                    {% else %}
+                    <span class="badge badge-rank0">잔여배정</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="text-center" style="padding:60px;">
+    <div style="font-size:48px; margin-bottom:16px;">📋</div>
+    <h3 style="color:var(--gray-600);">아직 배정된 결과가 없습니다</h3>
+    <p class="text-sm text-gray mt-4">"배정 실행" 메뉴에서 배정을 진행해주세요.</p>
+    <a href="{{ url_for('admin_assign') }}" class="btn btn-primary mt-4">배정 실행으로 이동</a>
+</div>
+{% endif %}
+{% endblock %}
