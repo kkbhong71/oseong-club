@@ -146,37 +146,22 @@ def insert_sample_data():
         ("축구부", "스포츠", 14, 6, "김체육", "축구 기술 향상 및 친선경기"),
         ("농구부", "스포츠", 14, 6, "이체육", "농구 기본기와 경기 운영"),
         ("배드민턴부", "스포츠", 14, 6, "박체육", "배드민턴 기초 및 실전 경기"),
+        ("탁구부", "스포츠", 14, 6, "심체육", "탁구 기초 및 실전 경기"),
         ("미술부", "예술", 14, 6, "박미술", "다양한 미술 기법 학습과 작품 제작"),
         ("밴드부", "예술", 14, 6, "최음악", "악기 연주 및 합주 활동"),
+        ("사진영상반", "예술", 14, 6, "남예술", "사진 촬영 및 영상 편집 활동"),
         ("과학탐구반", "학술", 14, 6, "정과학", "과학 실험 및 탐구 활동"),
         ("코딩반", "학술", 14, 6, "한정보", "프로그래밍 및 소프트웨어 개발"),
         ("독서토론반", "학술", 14, 6, "윤국어", "독서 및 토론 활동"),
-        ("봉사단", "봉사", 14, 6, "강도덕", "지역사회 봉사활동"),
         ("영어회화반", "학술", 14, 6, "오영어", "영어 회화 및 문화 체험"),
+        ("수학탐구반", "학술", 14, 6, "장수학", "수학 심화 학습 및 문제 풀이"),
+        ("역사탐방반", "학술", 14, 6, "고역사", "역사 유적 탐방 및 연구"),
+        ("봉사단", "봉사", 14, 6, "강도덕", "지역사회 봉사활동"),
+        ("환경지킴이", "봉사", 14, 6, "배환경", "환경 보호 및 생태 체험 활동"),
     ]
     db.executemany(
         "INSERT INTO clubs (name, category, max_capacity, min_capacity, teacher, description) VALUES (?, ?, ?, ?, ?, ?)",
         clubs
-    )
-    
-    # 학생 데이터
-    last_names = ["김", "이", "박", "최", "정", "강", "조", "윤", "장", "임", "한", "오", "서", "신", "권", "황", "안", "송", "류", "홍"]
-    first_names = ["민준", "서윤", "도윤", "서연", "시우", "하윤", "주원", "지유", "예준", "지민",
-                   "하준", "수아", "서준", "다은", "지호", "채원", "현우", "지안", "준서", "소율",
-                   "건우", "예린", "유준", "하은", "은우", "나윤", "민서", "윤서"]
-    
-    students = []
-    for grade in range(1, 4):
-        for class_num in range(1, 3):
-            count = 25 if grade == 1 else 26 if grade == 2 else 24
-            for num in range(1, count + 1):
-                ln = random.choice(last_names)
-                fn = random.choice(first_names)
-                students.append((grade, class_num, num, f"{ln}{fn}"))
-    
-    db.executemany(
-        "INSERT OR IGNORE INTO students (grade, class_num, number, name) VALUES (?, ?, ?, ?)",
-        students
     )
     
     db.commit()
@@ -458,6 +443,150 @@ def admin_student_delete(student_id):
     db.commit()
     flash("학생이 삭제되었습니다.", "success")
     return redirect(url_for("admin_students"))
+
+@app.route("/admin/students/upload", methods=["POST"])
+@admin_required
+def admin_students_upload():
+    """CSV 파일로 학생 명단 일괄 업로드"""
+    file = request.files.get("csv_file")
+    if not file or not file.filename:
+        flash("파일을 선택해주세요.", "error")
+        return redirect(url_for("admin_students"))
+    
+    if not file.filename.lower().endswith(".csv"):
+        flash("CSV 파일만 업로드 가능합니다.", "error")
+        return redirect(url_for("admin_students"))
+    
+    try:
+        # 파일 읽기 (UTF-8, BOM 처리)
+        raw = file.read()
+        # BOM 제거 및 인코딩 처리
+        for encoding in ["utf-8-sig", "utf-8", "euc-kr", "cp949"]:
+            try:
+                content = raw.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        else:
+            flash("파일 인코딩을 인식할 수 없습니다. UTF-8 또는 EUC-KR로 저장해주세요.", "error")
+            return redirect(url_for("admin_students"))
+        
+        # CSV 파싱
+        reader = csv.reader(io.StringIO(content))
+        rows = list(reader)
+        
+        if len(rows) < 2:
+            flash("데이터가 없습니다. 헤더 행과 데이터 행이 필요합니다.", "error")
+            return redirect(url_for("admin_students"))
+        
+        # 헤더 확인 (첫 행 건너뛰기)
+        header = [h.strip() for h in rows[0]]
+        data_rows = rows[1:]
+        
+        # 컬럼 매핑: 학년, 반, 번호, 이름 순서 자동 감지
+        col_map = {}
+        for i, h in enumerate(header):
+            h_lower = h.replace(" ", "")
+            if "학년" in h_lower:
+                col_map["grade"] = i
+            elif "반" in h_lower:
+                col_map["class_num"] = i
+            elif "번호" in h_lower or "번" == h_lower:
+                col_map["number"] = i
+            elif "이름" in h_lower or "성명" in h_lower:
+                col_map["name"] = i
+        
+        # 컬럼을 찾지 못한 경우 순서대로 할당 (학년, 반, 번호, 이름)
+        if len(col_map) < 4 and len(header) >= 4:
+            col_map = {"grade": 0, "class_num": 1, "number": 2, "name": 3}
+        elif len(col_map) < 4:
+            flash("CSV 파일에 학년, 반, 번호, 이름 컬럼이 필요합니다.", "error")
+            return redirect(url_for("admin_students"))
+        
+        db = get_db()
+        success_count = 0
+        skip_count = 0
+        error_count = 0
+        
+        for row_num, row in enumerate(data_rows, 2):
+            if len(row) < 4:
+                error_count += 1
+                continue
+            
+            try:
+                grade_str = row[col_map["grade"]].strip().replace("학년", "")
+                class_str = row[col_map["class_num"]].strip().replace("반", "")
+                number_str = row[col_map["number"]].strip().replace("번", "")
+                name = row[col_map["name"]].strip()
+                
+                grade = int(grade_str)
+                class_num = int(class_str)
+                number = int(number_str)
+                
+                if not name or grade < 1 or grade > 3:
+                    error_count += 1
+                    continue
+                
+                db.execute(
+                    "INSERT OR IGNORE INTO students (grade, class_num, number, name) VALUES (?, ?, ?, ?)",
+                    (grade, class_num, number, name)
+                )
+                if db.execute("SELECT changes()").fetchone()[0] > 0:
+                    success_count += 1
+                else:
+                    skip_count += 1
+                    
+            except (ValueError, IndexError):
+                error_count += 1
+                continue
+        
+        db.commit()
+        
+        msg = f"업로드 완료! {success_count}명 추가"
+        if skip_count > 0:
+            msg += f", {skip_count}명 중복(건너뜀)"
+        if error_count > 0:
+            msg += f", {error_count}건 오류"
+        flash(msg, "success" if success_count > 0 else "warning")
+        
+    except Exception as e:
+        flash(f"파일 처리 중 오류가 발생했습니다: {str(e)}", "error")
+    
+    return redirect(url_for("admin_students"))
+
+@app.route("/admin/students/delete-all", methods=["POST"])
+@admin_required
+def admin_students_delete_all():
+    """전체 학생 삭제"""
+    db = get_db()
+    db.execute("DELETE FROM preferences")
+    db.execute("DELETE FROM assignments")
+    db.execute("DELETE FROM students")
+    db.commit()
+    set_setting("is_assigned", "0")
+    set_setting("show_results", "0")
+    flash("모든 학생 데이터가 삭제되었습니다.", "success")
+    return redirect(url_for("admin_students"))
+
+@app.route("/admin/students/sample-csv")
+@admin_required
+def admin_students_sample_csv():
+    """샘플 CSV 다운로드"""
+    output = io.StringIO()
+    output.write('\ufeff')
+    writer = csv.writer(output)
+    writer.writerow(["학년", "반", "번호", "이름"])
+    writer.writerow(["1", "1", "1", "김민준"])
+    writer.writerow(["1", "1", "2", "이서윤"])
+    writer.writerow(["1", "1", "3", "박도윤"])
+    writer.writerow(["2", "1", "1", "최서연"])
+    writer.writerow(["3", "2", "1", "정시우"])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=student_sample.csv"}
+    )
 
 # --- 희망조사 현황 ---
 @app.route("/admin/preferences")

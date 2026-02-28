@@ -44,6 +44,19 @@
     </div>
 </div>
 
+<!-- 학생 미등록 안내 -->
+{% if total_students == 0 %}
+<div class="card mb-5" style="background:#fffff0; border:2px solid #ecc94b; text-align:center; padding:32px;">
+    <div style="font-size:40px; margin-bottom:12px;">📋</div>
+    <h3 style="font-size:16px; font-weight:700; color:#744210; margin-bottom:8px;">학생 명단을 등록해주세요</h3>
+    <p class="text-sm" style="color:#975a16; margin-bottom:16px; line-height:1.7;">
+        아직 등록된 학생이 없습니다.<br>
+        "학생 관리" 메뉴에서 CSV 파일을 업로드하여 학생 명단을 등록하세요.
+    </p>
+    <a href="{{ url_for('admin_students') }}" class="btn btn-primary">학생 관리로 이동</a>
+</div>
+{% endif %}
+
 <!-- 학년별 제출 현황 -->
 <div class="card">
     <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">📊 학년별 제출 현황</h3>
